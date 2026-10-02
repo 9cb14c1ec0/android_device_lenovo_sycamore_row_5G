@@ -2,7 +2,9 @@
 
 TWRP bring-up for the Lenovo Tab K11 Gen 2 5G (TB336ZA).
 
-This is an early, experimental tree. There is no recovery image yet.
+This is an early, experimental tree. No image has been tested on
+hardware yet. The first goal is TWRP UI, touch and ADB; `/data`
+decryption comes later.
 
 ## Device
 
@@ -16,7 +18,35 @@ This is an early, experimental tree. There is no recovery image yet.
 | Kernel | GKI 5.15 (`android13-5.15`) |
 | Boot layout | Boot header v4, `boot` + `init_boot` + `vendor_boot`, A/B, virtual A/B |
 | Recovery location | `vendor_boot` (no `recovery` partition) |
-| Stock firmware tested | `17.0.10.541` (Android 15), `17.5.10.354` (Android 16) |
+| Touch (tested unit) | Himax `hx83102j` (`himax-touchscreen`) |
+| Display | 1600x2560, 320 dpi |
+| Target firmware | `17.5.10.354` |
+
+## Building
+
+The tree targets TWRP 14.1 and the stock `17.5.10.354` firmware.
+
+```bash
+# in a TWRP 14.1 source tree, with this repo at device/lenovo/sycamore_row_5G
+source build/envsetup.sh
+lunch twrp_sycamore_row_5G-ap2a-eng
+device/lenovo/sycamore_row_5G/tools/build-vendor-boot.sh /path/to/stock/vendor_boot.img
+```
+
+The result is `$OUT/vendor_boot-twrp.img`.
+
+Stock `vendor_boot` has a single unnamed PLATFORM ramdisk: one
+LZ4-legacy CPIO holding both the first-stage vendor ramdisk and Lenovo's
+stock recovery. `tools/repack_vendor_boot.py` keeps the stock header,
+DTB and AVB footer properties, and appends the TWRP recovery CPIO after
+the stock CPIO. TWRP files replace stock recovery files, while the stock
+kernel modules, first-stage fstab and `init.recovery.mt6835.rc` stay in
+place. The stock first-stage init loads `modules.load.recovery`, which
+already includes the touch drivers (`hx83102j`, `gt9896s`, `nt36523n`)
+and the display stack.
+
+`prebuilt/kernel` and `prebuilt/dtb` are taken unmodified from the stock
+`17.5.10.354` `boot.img` and `vendor_boot.img`.
 
 ## Download agent
 
