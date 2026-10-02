@@ -27,6 +27,7 @@ TARGET_NO_BOOTLOADER := true
 # from vendor_boot.img. The final image keeps the stock DTB either way.
 TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/kernel
 BOARD_PREBUILT_DTBIMAGE_DIR := $(DEVICE_PATH)/prebuilt
+BOARD_INCLUDE_DTB_IN_BOOTIMG := true
 BOARD_KERNEL_IMAGE_NAME := Image
 
 # Values from the stock vendor_boot v4 header.
@@ -40,7 +41,7 @@ BOARD_DTB_OFFSET := 0x07c80000
 BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2
 BOARD_MKBOOTIMG_ARGS := --header_version 4 --kernel_offset $(BOARD_KERNEL_OFFSET) \
     --ramdisk_offset $(BOARD_RAMDISK_OFFSET) --tags_offset $(BOARD_TAGS_OFFSET) \
-    --dtb_offset $(BOARD_DTB_OFFSET) --dtb $(DEVICE_PATH)/prebuilt/dtb
+    --dtb_offset $(BOARD_DTB_OFFSET)
 BOARD_RAMDISK_USE_LZ4 := true
 
 BOARD_BOOTIMAGE_PARTITION_SIZE := 67108864
@@ -88,9 +89,10 @@ TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 TARGET_SCREEN_WIDTH := 1600
 TARGET_SCREEN_HEIGHT := 2560
 TW_THEME := portrait_hdpi
-TW_NO_SCREEN_BLANK := true
-# hall_irq is the cover sensor; lenovo-stylus is the pen digitizer.
-TW_INPUT_BLACKLIST := "hall_irq\x0alenovo-stylus"
+# hall_irq is the cover sensor. The pen digitizer (lenovo-stylus) should
+# be ignored too, but soong cannot pass the \x0a separator TWRP expects.
+# TODO: blacklist lenovo-stylus once there is a working way to list two.
+TW_INPUT_BLACKLIST := "hall_irq"
 # TODO: confirm the backlight node and range on hardware before setting
 # TW_BRIGHTNESS_PATH / TW_MAX_BRIGHTNESS.
 
