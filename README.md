@@ -48,6 +48,28 @@ and the display stack.
 `prebuilt/kernel` and `prebuilt/dtb` are taken unmodified from the stock
 `17.5.10.354` `boot.img` and `vendor_boot.img`.
 
+## Bootloader unlock
+
+The bootloader needs a Lenovo-signed, device-specific `sn.img`; plain
+`fastboot flashing unlock` is not enough. The LK checks the image's
+signature and serial number ("unlock image signature check fail",
+"bootloader unlock sn check fail").
+
+1. Read the bootloader SN: `fastboot getvar all` prints
+   `Bootloader_SN_Part1` and `Bootloader_SN_Part2`; concatenate them
+   (64 hex characters).
+2. Request `sn.img` from Lenovo at https://m.zui.com/iunlock. It is
+   emailed, and is also published at
+   `http://cdn.zui.lenovomm.com/developer/enhancedboot/<SN>/sn.img`.
+3. In the bootloader:
+   ```bash
+   fastboot flash unlock sn.img
+   fastboot oem unlock   # do not reboot between the two commands
+   ```
+   Confirm on the tablet. This wipes `userdata`.
+
+The `sn.img` is tied to one tablet and cannot be reused on another.
+
 ## Download agent
 
 `prebuilt/download_agent/` contains Lenovo's signed MediaTek download agent
