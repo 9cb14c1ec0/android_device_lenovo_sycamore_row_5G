@@ -58,9 +58,16 @@ signature and serial number ("unlock image signature check fail",
 1. Read the bootloader SN: `fastboot getvar all` prints
    `Bootloader_SN_Part1` and `Bootloader_SN_Part2`; concatenate them
    (64 hex characters).
-2. Request `sn.img` from Lenovo at https://m.zui.com/iunlock. It is
-   emailed, and is also published at
-   `http://cdn.zui.lenovomm.com/developer/enhancedboot/<SN>/sn.img`.
+2. Fetch the signed `sn.img` from Lenovo's CDN with the 64-char SN:
+   ```bash
+   tools/fetch-sn-img.sh <SN> sn.img
+   ```
+   This downloads `http://cdn.zui.lenovomm.com/developer/enhancedboot/<SN>/sn.img`
+   directly, no email or registration needed. (If the CDN ever returns
+   nothing, request it once at https://m.zui.com/iunlock.) The file is a
+   ~356-byte Lenovo-signed certificate (`1a2blenovo` magic + the SN +
+   an RSA-2048 signature), bound to this tablet's hardware SN and valid
+   across firmware updates.
 3. In the bootloader:
    ```bash
    fastboot flash unlock sn.img
