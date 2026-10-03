@@ -107,13 +107,20 @@ TW_INCLUDE_RESETPROP := true
 TW_INCLUDE_LIBRESETPROP := true
 TW_USE_TOOLBOX := true
 
-# First milestone is UI, touch and ADB. /data uses metadata encryption
-# plus FBE v2 with a Beanpod TEE; decryption comes later, following the
-# TB305FU crypto work.
+# /data uses metadata encryption plus FBE v2. Keys live in the Beanpod
+# (Microtrust) TEE behind KeyMint 2.0 (AIDL) and a HIDL gatekeeper; see
+# recovery/root/system/etc/init/tb336za-crypto.rc and prebuilt/crypto.
+TW_INCLUDE_CRYPTO := true
 TW_EXCLUDE_ENCRYPTED_BACKUPS := true
 TW_SKIP_ADDITIONAL_FSTAB := true
 
 TWRP_INCLUDE_LOGCAT := true
 TARGET_USES_LOGD := true
 
-TW_DEVICE_VERSION := TB336ZA-alpha1
+# Stock 17.5.10.354 vendor patch level. ro.build.* (OS 16 / 2026-08-05)
+# and ro.crypto.* are stamped into prop.default after the recovery root
+# is assembled.
+VENDOR_SECURITY_PATCH := 2026-08-05
+BOARD_RECOVERY_IMAGE_PREPARE = $(DEVICE_PATH)/stamp-recovery-props.sh $(TARGET_RECOVERY_ROOT_OUT)
+
+TW_DEVICE_VERSION := TB336ZA-alpha2

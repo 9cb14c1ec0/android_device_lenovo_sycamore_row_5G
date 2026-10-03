@@ -1,0 +1,4 @@
+# Loaded by recovery init after /system/build.prop. Vendor-side values the
+# Beanpod HALs read, matching stock 17.5.10.354.
+ro.vendor.build.security_patch=2026-08-05
+ro.hardware.gatekeeper=beanpod

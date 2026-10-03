@@ -1,0 +1,6 @@
+<!--
+  Framework manifest. libvintf only loads /system/etc/vintf/manifest/
+  fragments, and servicemanager only resolves VINTF declarations, once this
+  file exists. Device HALs are declared in /vendor/etc/vintf/manifest.xml.
+-->
+<manifest version="1.0" type="framework" />

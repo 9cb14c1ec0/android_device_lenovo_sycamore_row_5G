@@ -1,0 +1,7 @@
+# Microtrust/Beanpod TEE nodes. Names match the stock vendor file_contexts.
+type teei_client_device, dev_type;
+type teei_config_device, dev_type;
+type teei_vfs_device, dev_type;
+type teei_rpmb_device, dev_type;
+type teei_fp_device, dev_type;
+type ut_keymaster_device, dev_type;

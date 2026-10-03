@@ -1,0 +1,38 @@
+<!--
+  Recovery device manifest for the Beanpod (Microtrust) crypto HALs, copied
+  from the stock 17.5.10.354 vendor manifest and fragments. servicemanager
+  only lets the VINTF-stability KeyMint service register declared instances;
+  hwservicemanager needs the HIDL gatekeeper entry for getTransport().
+-->
+<manifest version="1.0" type="device">
+    <hal format="hidl">
+        <name>android.hardware.gatekeeper</name>
+        <transport>hwbinder</transport>
+        <fqname>@1.0::IGatekeeper/default</fqname>
+    </hal>
+    <hal format="aidl">
+        <name>android.hardware.security.keymint</name>
+        <version>2</version>
+        <fqname>IKeyMintDevice/default</fqname>
+    </hal>
+    <hal format="aidl">
+        <name>android.hardware.security.keymint</name>
+        <version>2</version>
+        <fqname>IRemotelyProvisionedComponent/default</fqname>
+    </hal>
+    <hal format="aidl">
+        <name>android.hardware.security.secureclock</name>
+        <fqname>ISecureClock/default</fqname>
+    </hal>
+    <hal format="aidl">
+        <name>android.hardware.security.sharedsecret</name>
+        <fqname>ISharedSecret/default</fqname>
+    </hal>
+    <!-- TWRP's own health HAL (battery level in the UI). Its fragment in
+         /system/etc/vintf/manifest is device-type, so it is never loaded. -->
+    <hal format="aidl">
+        <name>android.hardware.health</name>
+        <version>1</version>
+        <fqname>IHealth/default</fqname>
+    </hal>
+</manifest>

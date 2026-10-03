@@ -9,3 +9,132 @@ allow recovery graphics_device:chr_file rw_file_perms;
 # gets EACCES and the recovery UI aborts (SIGABRT) right after
 # "Using drm graphics".
 allow recovery self:process execmem;
+
+# ---------------------------------------------------------------------------
+# /data decryption: Beanpod TEE, KeyMint 2.0 (AIDL), HIDL gatekeeper,
+# keystore2 and TWRP's in-process vold. All of these run in the recovery
+# domain (tb336za-crypto.rc). Ported from the TB305FU tree, with its
+# Keymaster 4.1 HIDL grants replaced by the AIDL KeyMint services.
+# ---------------------------------------------------------------------------
+
+# Microtrust TEE character devices.
+allow recovery teei_client_device:chr_file rw_file_perms;
+allow recovery teei_config_device:chr_file rw_file_perms;
+allow recovery teei_vfs_device:chr_file rw_file_perms;
+allow recovery teei_rpmb_device:chr_file rw_file_perms;
+allow recovery teei_fp_device:chr_file rw_file_perms;
+allow recovery ut_keymaster_device:chr_file rw_file_perms;
+
+# tb336za_teei_wait.sh polls dmesg for "Keymaster Unlocked".
+allow recovery kmsg_device:chr_file { read open };
+allow recovery kernel:system syslog_read;
+
+# servicemanager, hwservicemanager and keystore2 run as recovery: they
+# must own the Binder context manager, query SELinux access decisions,
+# and publish their *.ready properties (hwservicemanager.ready was never
+# set under enforcing, so HIDL clients waited forever).
+allow recovery self:binder { set_context_mgr call transfer };
+selinux_check_access(recovery)
+allow recovery service_manager_service:service_manager { add find };
+set_prop(recovery, servicemanager_prop)
+set_prop(recovery, hwservicemanager_prop)
+
+# Beanpod KeyMint 2.0 registers these four AIDL instances.
+allow recovery hal_keymint_service:service_manager { add find };
+allow recovery hal_secureclock_service:service_manager { add find };
+allow recovery hal_sharedsecret_service:service_manager { add find };
+allow recovery hal_remotelyprovisionedcomponent_service:service_manager { add find };
+
+# HIDL gatekeeper@1.0 passthrough service registerAsService / getService.
+allow recovery hal_gatekeeper_hwservice:hwservice_manager { add find };
+allow recovery hidl_base_hwservice:hwservice_manager add;
+allow recovery hidl_manager_hwservice:hwservice_manager find;
+
+# keystore2 and the recovery UI publish / look up the keystore2 services.
+allow recovery keystore_service:service_manager { add find };
+allow recovery apc_service:service_manager { add find };
+allow recovery authorization_service:service_manager { add find };
+allow recovery keystore_maintenance_service:service_manager { add find };
+allow recovery keystore_metrics_service:service_manager { add find };
+allow recovery legacykeystore_service:service_manager { add find };
+# keystore2's km_compat layer looks up the Keymaster4->KeyMint compat
+# service. Our HAL is native KeyMint 2.0 so decryption does not need it,
+# but the lookup otherwise loops with a denial.
+allow recovery keystore_compat_hal_service:service_manager { add find };
+# A successful gatekeeper verify returns a hardware auth token that TWRP's
+# in-process vold client submits to keystore2.
+allow recovery self:keystore2 add_auth;
+
+# TWRP performs vold's FBE setup in-process. Stock /data directories carry
+# per-user MLS categories, so recovery needs vold's MLS override.
+typeattribute recovery mlstrustedsubject;
+
+# Metadata encryption key directory and the stock /data labels TWRP reads
+# while unwrapping user 0's keys. Do not allow all of data_file_type; that
+# hits platform neverallows.
+allow recovery vold_metadata_file:dir r_dir_perms;
+allow recovery vold_metadata_file:file r_file_perms;
+allow recovery system_data_root_file:dir { r_dir_perms ioctl };
+allow recovery system_data_file:dir { r_dir_perms ioctl mounton };
+allow recovery system_data_file:file r_file_perms;
+allow recovery unencrypted_data_file:dir { r_dir_perms ioctl };
+allow recovery unencrypted_data_file:file create_file_perms;
+allow recovery media_userdir_file:dir r_dir_perms;
+allow recovery media_rw_data_file:dir { r_dir_perms ioctl };
+allow recovery media_rw_data_file:file r_file_perms;
+allow recovery vold_data_file:dir create_dir_perms;
+allow recovery vold_data_file:file create_file_perms;
+allow recovery system_userdir_file:dir r_dir_perms;
+allow recovery user_profile_root_file:dir r_dir_perms;
+allow recovery vendor_userdir_file:dir r_dir_perms;
+allow recovery vendor_data_file:dir { r_dir_perms ioctl };
+allowxperm recovery {
+    system_data_root_file
+    system_data_file
+    unencrypted_data_file
+    media_rw_data_file
+    vendor_data_file
+}:dir ioctl {
+    FS_IOC_GET_ENCRYPTION_POLICY
+    FS_IOC_SET_ENCRYPTION_POLICY
+    FS_IOC_ADD_ENCRYPTION_KEY
+    FS_IOC_REMOVE_ENCRYPTION_KEY
+    FS_IOC_GET_ENCRYPTION_KEY_STATUS
+};
+
+# logd runs as recovery so HAL / keystore2 CHECK messages are readable.
+# Without socket directory write access it exits and init crash-loops it.
+allow recovery logd_exec:file { execute execute_no_trans entrypoint getattr read open };
+allow recovery socket_device:dir { search write add_name remove_name };
+allow recovery socket_device:sock_file write;
+allow recovery logd_socket:sock_file create_file_perms;
+allow recovery logdw_socket:sock_file write;
+allow recovery logdr_socket:sock_file rw_file_perms;
+allow recovery pstorefs:dir search;
+allow recovery self:unix_dgram_socket sendto;
+allow recovery self:global_capability_class_set { setuid setgid audit_control };
+allow recovery self:global_capability2_class_set syslog;
+allow recovery kernel:system syslog_mod;
+allow recovery proc_kmsg:file r_file_perms;
+set_prop(recovery, logd_prop);
+
+# TWRP's OpenRecoveryScript / ADB-backup control FIFOs live in /tmp.
+allow recovery tmpfs:dir { search write add_name remove_name };
+allow recovery tmpfs:fifo_file create_file_perms;
+
+
+
+# Rules below conflict with the frozen platform API neverallows of the
+# normal Android policy, so they are compiled into the recovery policy only.
+recovery_only(`
+  # logd (run as recovery) creates its control sockets and reads pstore.
+  allow recovery socket_device:sock_file { create setattr unlink };
+  allow recovery pstorefs:file r_file_perms;
+
+  # teei_daemon publishes vendor.soter.teei.init=INIT_OK once the TEE is up,
+  # and the KeyMint HAL blocks on it (and sets vendor.soter.teei.km.*).
+  # Under enforcing the set was denied, KeyMint never initialized and
+  # keystore2 / /data decryption hung. The matching platform neverallows in
+  # private/property.te exempt recovery.
+  set_prop(recovery, vendor_default_prop)
+')

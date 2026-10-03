@@ -1,0 +1,69 @@
+# Beanpod (Microtrust) TEE + KeyMint 2.0 + HIDL gatekeeper for /data
+# decryption in recovery. Mirrors the stock 17.5.10.354 microtrust.rc,
+# keymint and gatekeeper service definitions. All services run in the
+# recovery domain, as on the TB305FU.
+
+# Neutralize vndservicemanager. Recovery (a coredomain) may not open
+# /dev/vndbinder, so it falls back to /dev/binder and grabs the context
+# manager first; the real servicemanager then fails with "Could not become
+# context manager" and crash-loops. Nothing here uses vndbinder. This file
+# sorts before vndservicemanager.rc, so this definition wins and its
+# "start vndservicemanager" runs a no-op.
+service vndservicemanager /system/bin/true
+    disabled
+    oneshot
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
+on post-fs
+    chmod 0660 /dev/teei_client
+    chmod 0660 /dev/teei_config
+    chmod 0666 /dev/isee_tee0
+    chmod 0660 /dev/tz_vfs
+    chmod 0660 /dev/teei_fp
+    chmod 0660 /dev/ut_keymaster
+    chmod 0660 /dev/rpmb0
+    mkdir /mnt/vendor 0755 root root
+    mkdir /mnt/vendor/persist 0771 system system
+    mount ext4 /dev/block/by-name/persist /mnt/vendor/persist rw wait
+    mkdir /data/vendor 0771 system system
+    mkdir /data/vendor/thh 0755 system system
+    mkdir /data/vendor/thh/system 0755 system system
+    mkdir /data/vendor/thh/ta 0755 system system
+    mkdir /data/vendor/thh/tee 0755 system system
+    mkdir /data/vendor/thh/tee/tas 0755 system system
+    mkdir /data/vendor/thh/tee_log 0755 system system
+    mkdir /data/vendor/key_provisioning 0771 system system
+    start tb336za_teei
+    exec_start tb336za_teei_wait
+    start tb336za_keymint
+    start tb336za_gatekeeper
+
+service tb336za_teei /system/bin/sh /system/bin/tb336za_teei.sh
+    disabled
+    user root
+    group root
+    seclabel u:r:recovery:s0
+    stdio_to_kmsg
+
+service tb336za_teei_wait /system/bin/sh /system/bin/tb336za_teei_wait.sh
+    disabled
+    oneshot
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
+service tb336za_keymint /system/bin/sh /system/bin/tb336za_keymint.sh
+    disabled
+    user root
+    group root
+    seclabel u:r:recovery:s0
+    stdio_to_kmsg
+
+service tb336za_gatekeeper /system/bin/sh /system/bin/tb336za_gatekeeper.sh
+    disabled
+    user root
+    group root
+    seclabel u:r:recovery:s0
+    stdio_to_kmsg

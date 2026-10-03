@@ -2,9 +2,19 @@
 
 TWRP bring-up for the Lenovo Tab K11 Gen 2 5G (TB336ZA).
 
-This is an early, experimental tree. No image has been tested on
-hardware yet. The first goal is TWRP UI, touch and ADB; `/data`
-decryption comes later.
+Working on hardware (stock `17.5.10.354`, bootloader unlocked):
+
+- Boots to the TWRP UI with the stock MediaTek DRM display.
+- Touch (Himax `hx83102j`), hardware keys.
+- Root ADB in recovery.
+- **`/data` decryption**, automatic at boot under SELinux enforcing, via
+  the stock Beanpod (Microtrust) TEE with KeyMint 2.0 (AIDL) and a HIDL
+  gatekeeper. `/data`, `/data/media/0` and the Android data dirs mount and
+  are read/write.
+- fastbootd, backup/restore of the standard partitions.
+
+See `docs/DECRYPTION.md` for how the crypto stack is assembled and the
+boot-ordering issues it works around.
 
 ## Device
 

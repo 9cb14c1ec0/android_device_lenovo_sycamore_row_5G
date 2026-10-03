@@ -3,3 +3,14 @@
 # graphics device and the recovery process crash-loops. Label it
 # graphics_device, matching how the TB305FU tree fixes the same issue.
 /dev/dri(/.*)?    u:object_r:graphics_device:s0
+
+# Microtrust/Beanpod TEE device nodes used by teei_daemon and the KeyMint /
+# gatekeeper HALs (labels follow the stock vendor file_contexts).
+/dev/teei_client    u:object_r:teei_client_device:s0
+/dev/isee_tee0      u:object_r:teei_client_device:s0
+/dev/teei_config    u:object_r:teei_config_device:s0
+/dev/tz_vfs         u:object_r:teei_vfs_device:s0
+/dev/ut_keymaster   u:object_r:ut_keymaster_device:s0
+/dev/rpmb0          u:object_r:teei_rpmb_device:s0
+/dev/emmcrpmb0      u:object_r:teei_rpmb_device:s0
+/dev/teei_fp        u:object_r:teei_fp_device:s0
