@@ -1,0 +1,11 @@
+# The stock MediaTek DRM node is /dev/dri/card0, labeled graphics_device by
+# this device tree's file_contexts. Without this, minui's drm_init() gets
+# EACCES opening the card and TWRP shows no UI.
+allow recovery graphics_device:dir r_dir_perms;
+allow recovery graphics_device:chr_file rw_file_perms;
+
+# TWRP's pixelflinger code cache maps executable anonymous memory
+# (libpixelflinger CodeCache, MAP_ANONYMOUS). Without execmem the mmap
+# gets EACCES and the recovery UI aborts (SIGABRT) right after
+# "Using drm graphics".
+allow recovery self:process execmem;

@@ -3,6 +3,8 @@
 
 DEVICE_PATH := device/lenovo/sycamore_row_5G
 
+BOARD_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy
+
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 
 # MT6835: 2x Cortex-A76 + 6x Cortex-A55.

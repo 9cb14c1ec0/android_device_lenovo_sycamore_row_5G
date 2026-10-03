@@ -1,0 +1,5 @@
+# The MediaTek DRM node /dev/dri/card0 comes up labeled generic "device",
+# which the recovery domain cannot open (EACCES), so TWRP's minui finds no
+# graphics device and the recovery process crash-loops. Label it
+# graphics_device, matching how the TB305FU tree fixes the same issue.
+/dev/dri(/.*)?    u:object_r:graphics_device:s0
